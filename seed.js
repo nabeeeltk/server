@@ -1,15 +1,15 @@
 // seed.js — SQLite version. Run with: node seed.js from /server directory
-const Database = require('better-sqlite3');
-const bcrypt = require('bcryptjs');
-const path = require('path');
-const fs = require('fs');
+import Database from 'better-sqlite3';
+import { hashSync } from 'bcryptjs';
+import { join } from 'path';
+import { existsSync, unlinkSync, readFileSync } from 'fs';
 require('dotenv').config();
 
-const dbPath = path.join(__dirname, 'panchayat.db');
+const dbPath = join(__dirname, 'panchayat.db');
 
 // Delete existing DB to start fresh
-if (fs.existsSync(dbPath)) {
-  fs.unlinkSync(dbPath);
+if (existsSync(dbPath)) {
+  unlinkSync(dbPath);
   console.log('🗑️  Removed old database');
 }
 
@@ -21,12 +21,12 @@ async function seed() {
   console.log('🌱 Starting SQLite database seed...');
 
   // Apply schema
-  const schema = fs.readFileSync(path.join(__dirname, 'db', 'schema.sql'), 'utf8');
+  const schema = readFileSync(join(__dirname, 'db', 'schema.sql'), 'utf8');
   db.exec(schema);
   console.log('✅ Schema applied');
 
   // Admin user
-  const adminHash = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'admin123', 10);
+  const adminHash = hashSync(process.env.ADMIN_PASSWORD || 'admin123', 10);
   db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?,?,?)').run('admin', adminHash, 'admin');
   console.log('✅ Admin user created');
 
@@ -53,7 +53,7 @@ async function seed() {
   const insertUser = db.prepare('INSERT INTO users (username, password_hash, role, unit_id) VALUES (?,?,?,?)');
   for (let i = 1; i <= 21; i++) {
     const unitNum = String(i).padStart(2, '0');
-    const hash = bcrypt.hashSync(`unit${unitNum}pass`, 10);
+    const hash = hashSync(`unit${unitNum}pass`, 10);
     insertUser.run(`unit_${unitNum}`, hash, 'unit', unitIds[i - 1]);
   }
   console.log('✅ 21 unit users created');
